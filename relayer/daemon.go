@@ -56,7 +56,7 @@ func (r *Relayer) relayerCompetitionDaemon(startHeight uint64, curValidatorsHash
 		// Found validator set change
 		if len(tashSet.TaskList) > 0 {
 			if tashSet.TaskList[0].ChannelID == executor.PureHeaderSyncChannelID {
-				txHash, err := r.bscExecutor.SyncTendermintLightClientHeader(tashSet.Height)
+				txHash,_, err := r.bscExecutor.SyncTendermintLightClientHeader(tashSet.Height)
 				if err != nil {
 					common.Logger.Error(err.Error())
 				}
@@ -78,7 +78,7 @@ func (r *Relayer) relayerCompetitionDaemon(startHeight uint64, curValidatorsHash
 			continue // skip this height
 		}
 
-		txHash, err := r.bscExecutor.SyncTendermintLightClientHeader(tashSet.Height + 1)
+		txHash, _, err := r.bscExecutor.SyncTendermintLightClientHeader(tashSet.Height + 1)
 		if err != nil {
 			common.Logger.Error(err.Error())
 			continue // try again for this height
@@ -116,7 +116,7 @@ func (r *Relayer) relayerDaemon(curValidatorsHash cmn.HexBytes) {
 		}
 		// Found validator set change
 		if validatorSetChanged {
-			txHash, err := r.bscExecutor.SyncTendermintLightClientHeader(height)
+			txHash, _, err := r.bscExecutor.SyncTendermintLightClientHeader(height)
 			if err != nil {
 				common.Logger.Error(err.Error())
 			}

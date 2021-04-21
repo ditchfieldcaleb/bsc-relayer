@@ -199,19 +199,19 @@ func (executor *BSCExecutor) getCallOpts() (*bind.CallOpts, error) {
 	return callOpts, nil
 }
 
-func (executor *BSCExecutor) SyncTendermintLightClientHeader(height uint64) (common.Hash, error) {
+func (executor *BSCExecutor) SyncTendermintLightClientHeader(height uint64) (common.Hash, uint64, error) {
 	nonce, err := executor.GetClient().PendingNonceAt(context.Background(), executor.txSender)
 	if err != nil {
-		return common.Hash{}, err
+		return common.Hash{}, 0, err
 	}
 	txOpts, err := executor.getTransactor(nonce)
 	if err != nil {
-		return common.Hash{}, err
+		return common.Hash{}, 0, err
 	}
 
 	instance, err := tendermintlightclient.NewTendermintlightclient(tendermintLightClientContractAddr, executor.GetClient())
 	if err != nil {
-		return common.Hash{}, err
+		return common.Hash{}, 0, err
 	}
 
 	//TODO optimize
@@ -221,18 +221,18 @@ tryAgain:
 		if isHeaderNonExistingErr(err) {
 			goto tryAgain
 		} else {
-			return common.Hash{}, err
+			return common.Hash{}, 0, err
 		}
 	}
 
 	headerBytes, err := header.EncodeHeader()
 	if err != nil {
-		return common.Hash{}, err
+		return common.Hash{}, 0, err
 	}
 
 	tx, err := instance.SyncTendermintHeader(txOpts, headerBytes, height)
 	if err != nil {
-		return common.Hash{}, err
+		return common.Hash{}, 0, err
 	}
 
 	relayTx := &model.RelayTransaction{
@@ -256,10 +256,10 @@ tryAgain:
 
 	err = executor.saveRelayTx(relayTx)
 	if err != nil {
-		return common.Hash{}, err
+		return common.Hash{}, 0, err
 	}
 
-	return tx.Hash(), nil
+	return tx.Hash(), nonce, nil
 }
 
 func (executor *BSCExecutor) CallBuildInSystemContract(channelID relayercommon.CrossChainChannelID, height, sequence uint64, msgBytes, proofBytes []byte, nonce uint64) (common.Hash, error) {
@@ -347,12 +347,16 @@ func (executor *BSCExecutor) RelayCrossChainPackage(channelID relayercommon.Cros
 	return tx, nil
 }
 
-func (executor *BSCExecutor) BatchRelayCrossChainPackages(channelID relayercommon.CrossChainChannelID, startSequence, endSequence, height uint64) ([]common.Hash, error) {
+func (executor *BSCExecutor) BatchRelayCrossChainPackages(channelID relayercommon.CrossChainChannelID, nonce, startSequence, endSequence, height uint64) ([]common.Hash, error) {
 	var txList []common.Hash
-	nonce, err := executor.GetClient().PendingNonceAt(context.Background(), executor.txSender)
-	if err != nil {
-		return nil, err
+	var err error
+	if nonce ==0 {
+		nonce, err = executor.GetClient().PendingNonceAt(context.Background(), executor.txSender)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	for seq := startSequence; seq < endSequence; seq++ {
 		msgBytes, proofBytes, err := executor.GetPackage(channelID, seq, height)
 		if err != nil {
@@ -371,6 +375,9 @@ func (executor *BSCExecutor) BatchRelayCrossChainPackages(channelID relayercommo
 		relayercommon.Logger.Infof("channelID: %d, sequence: %d, txHash: %s", channelID, seq, tx.String())
 		txList = append(txList, tx)
 		time.Sleep(5 * time.Millisecond)
+		if seq - startSequence > 300 {
+			break
+		}
 	}
 	return txList, nil
 }

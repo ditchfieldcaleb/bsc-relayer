@@ -2,6 +2,7 @@ package relayer
 
 import (
 	"fmt"
+	ethcmm "github.com/ethereum/go-ethereum/common"
 
 	"github.com/binance-chain/bsc-relayer/common"
 	util "github.com/binance-chain/bsc-relayer/config"
@@ -36,15 +37,17 @@ func (r *Relayer) cleanPreviousPackages(height uint64) (bool, error) {
 				util.SendTelegramMessage(r.cfg.AlertConfig.Identity, r.cfg.AlertConfig.TelegramBotId, r.cfg.AlertConfig.TelegramChatId,
 					fmt.Sprintf("Alert: channel %d, undelivered package quantity %d", channelId, nextSequence-nextDeliverSequence))
 			}
+			nonce := uint64(0)
+			var tx ethcmm.Hash
 			if !blockSynced {
-				tx, err := r.bscExecutor.SyncTendermintLightClientHeader(height + 1)
+				tx, nonce, err = r.bscExecutor.SyncTendermintLightClientHeader(height + 1)
 				if err != nil {
 					return needAccelerate, err
 				}
 				blockSynced = true
 				common.Logger.Infof("Sync header %d, txHash %s", height+1, tx.String())
 			}
-			_, err = r.bscExecutor.BatchRelayCrossChainPackages(common.CrossChainChannelID(channelId), nextDeliverSequence, nextSequence, height)
+			_, err = r.bscExecutor.BatchRelayCrossChainPackages(common.CrossChainChannelID(channelId), nonce, nextDeliverSequence, nextSequence, height)
 			if err != nil {
 				return needAccelerate, err
 			}
