@@ -27,8 +27,8 @@ func (r *Relayer) cleanPreviousPackages(height uint64) (bool, error) {
 		//if nextDeliverSequence < nextDeliveredSeqFromDB {
 		//	nextDeliverSequence = nextDeliveredSeqFromDB
 		//}
-		common.Logger.Infof("channelID: %d, next deliver sequence %d on BSC, next sequence %d on BC",
-			channelId, nextDeliverSequence, nextSequence)
+		common.Logger.Infof("channelID: %d, next deliver sequence %d on BSC, next sequence %d on BC, sequence gap: %d",
+			channelId, nextDeliverSequence, nextSequence, nextSequence-nextDeliverSequence)
 		if nextSequence > nextDeliverSequence {
 			if nextSequence-nextDeliverSequence >= r.cfg.AlertConfig.SequenceGapThreshold / 2 { //Accelerate if the sequence gap reaches half of threshold
 				needAccelerate = true
