@@ -47,7 +47,7 @@ func (r *Relayer) cleanPreviousPackages(height uint64) (bool, error) {
 				blockSynced = true
 				common.Logger.Infof("Sync header %d, txHash %s", height+1, tx.String())
 			}
-			_, err = r.bscExecutor.BatchRelayCrossChainPackages(common.CrossChainChannelID(channelId), nonce, nextDeliverSequence, nextSequence, height)
+			_, err = r.bscExecutor.BatchRelayCrossChainPackages(common.CrossChainChannelID(channelId), nonce+1, nextDeliverSequence, nextSequence, height)
 			if err != nil {
 				return needAccelerate, err
 			}
