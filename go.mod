@@ -31,7 +31,7 @@ require (
 	github.com/status-im/keycard-go v0.0.0-20200402102358-957c09536969 // indirect
 	github.com/stretchr/testify v1.5.1
 	github.com/tendermint/go-amino v0.14.1
-	github.com/tendermint/tendermint v0.32.3
+	github.com/tendermint/tendermint v0.32.10
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
 	google.golang.org/appengine v1.6.5 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
